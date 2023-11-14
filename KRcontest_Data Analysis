@@ -1,0 +1,617 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import plotly.express as px
+from plotly.offline import init_notebook_mode
+from scipy.fft import ifft
+from sklearn.preprocessing import StandardScaler
+
+
+
+data = {}
+
+for a in range(1, 33):
+    for b in range(1, 4):
+        filename = f'./normal/{a}-{b}.csv'
+        var_name = f'data_{a}_{b}'
+        data[var_name] = pd.read_csv(filename)
+        data[var_name] = data[var_name].head(6000)
+
+        time_series_data_piezo = data[var_name]['Piezo Value'].values
+        time_series_data_mic = data[var_name]['Mic Value'].values
+
+        fft_result_piezo = np.fft.fft(time_series_data_piezo)
+        fft_result_mic = np.fft.fft(time_series_data_mic)
+
+        magnitude_piezo = np.abs(fft_result_piezo)
+        magnitude_mic = np.abs(fft_result_mic)
+
+        frequency_piezo = np.fft.fftfreq(len(time_series_data_piezo), d=1)
+        frequency_mic = np.fft.fftfreq(len(time_series_data_mic), d=1)
+
+        positive_frequency_piezo = frequency_piezo[:len(frequency_piezo) // 2]
+        positive_frequency_mic = frequency_mic[:len(frequency_mic) // 2]
+
+        positive_magnitude_piezo = magnitude_piezo[:len(magnitude_piezo) // 2]
+        positive_magnitude_mic = magnitude_mic[:len(magnitude_mic) // 2]
+
+        sampling_rate = 6000
+
+        frequency_hz_piezo = positive_frequency_piezo * sampling_rate
+        frequency_hz_mic = positive_frequency_mic * sampling_rate
+
+        positive_magnitude_df_piezo = pd.DataFrame({'Positive_Magnitude_piezo': positive_magnitude_piezo})
+        positive_magnitude_df_mic = pd.DataFrame({'Positive_Magnitude_mic': positive_magnitude_mic})
+
+        positive_magnitude_df_piezo.loc[0, 'Positive_Magnitude_piezo'] = 0
+        positive_magnitude_df_mic.loc[0, 'Positive_Magnitude_mic'] = 0
+        
+        mean_piezo = np.mean(positive_magnitude_df_piezo["Positive_Magnitude_piezo"])
+        mean_mic = np.mean(positive_magnitude_df_mic["Positive_Magnitude_mic"])
+
+        std_dev_piezo = np.std(positive_magnitude_df_piezo["Positive_Magnitude_piezo"])
+        std_dev_mic = np.std(positive_magnitude_df_mic["Positive_Magnitude_mic"])
+
+        threshold = 5
+
+        lower_bound_piezo = mean_piezo - (threshold * std_dev_piezo)
+        lower_bound_mic = mean_mic - (threshold * std_dev_mic)
+
+        upper_bound_piezo = mean_piezo + (threshold * std_dev_piezo)
+        upper_bound_mic = mean_mic + (threshold * std_dev_mic)
+
+        magnitude_values_piezo = positive_magnitude_df_piezo["Positive_Magnitude_piezo"]
+        magnitude_values_mic = positive_magnitude_df_mic["Positive_Magnitude_mic"]
+
+        outliers_piezo = [i for i, x in enumerate(magnitude_values_piezo) if x < lower_bound_piezo or x > upper_bound_piezo]
+        outliers_mic = [i for i, x in enumerate(magnitude_values_mic) if x < lower_bound_mic or x > upper_bound_mic]
+
+        for i in outliers_piezo:
+            magnitude_values_piezo[i] = mean_piezo
+
+        for i in outliers_mic:
+            magnitude_values_mic[i] = mean_mic
+
+        positive_magnitude_df_piezo["Positive_Magnitude_piezo"] = magnitude_values_piezo
+        positive_magnitude_df_mic["Positive_Magnitude_mic"] = magnitude_values_mic
+
+        complex_data_piezo = positive_magnitude_df_piezo["Positive_Magnitude_piezo"].values
+        complex_data_mic = positive_magnitude_df_mic["Positive_Magnitude_mic"].values
+        
+        time_domain_data_piezo = ifft(complex_data_piezo)
+        time_domain_data_mic = ifft(complex_data_mic)
+
+        time_domain_df_piezo = pd.DataFrame({"Time_Domain_piezo_{}_{}".format(a, b): time_domain_data_piezo})
+        time_domain_df_mic = pd.DataFrame({"Time_Domain_mic_{}_{}".format(a, b): time_domain_data_mic})
+
+        time_domain_df = pd.concat([time_domain_df_piezo['Time_Domain_piezo_{}_{}'.format(a, b)], time_domain_df_mic['Time_Domain_mic_{}_{}'.format(a, b)]], axis=1)
+        data[var_name] = time_domain_df
+
+t_data_normal_piezo = pd.DataFrame()
+for var_name, df in data.items():
+    t_data_normal_piezo[var_name] = df.iloc[:, 0]
+    
+new_column_names_normal_piezo = ['normal_piezo_' + column for column in t_data_normal_piezo.columns]
+t_data_normal_piezo.columns = new_column_names_normal_piezo
+
+
+t_data_normal_mic = pd.DataFrame()
+for var_name, df in data.items():
+    t_data_normal_mic[var_name] = df.iloc[:, 1]
+    
+new_column_names_normal_mic = ['normal_mic_' + column for column in t_data_normal_mic.columns]
+t_data_normal_mic.columns = new_column_names_normal_mic
+
+
+
+data = {}
+
+for a in range(33, 53):
+    for b in range(1, 4):
+        filename = f'./wear/{a}-{b}.csv'
+        var_name = f'data_{a}_{b}'
+        data[var_name] = pd.read_csv(filename)
+        data[var_name] = data[var_name].head(6000)
+        
+        time_series_data_piezo = data[var_name]['Piezo Value'].values
+        time_series_data_mic = data[var_name]['Mic Value'].values
+
+        fft_result_piezo = np.fft.fft(time_series_data_piezo)
+        fft_result_mic = np.fft.fft(time_series_data_mic)
+
+        magnitude_piezo = np.abs(fft_result_piezo)
+        magnitude_mic = np.abs(fft_result_mic)
+
+        frequency_piezo = np.fft.fftfreq(len(time_series_data_piezo), d=1)
+        frequency_mic = np.fft.fftfreq(len(time_series_data_mic), d=1)
+
+        positive_frequency_piezo = frequency_piezo[:len(frequency_piezo) // 2]
+        positive_frequency_mic = frequency_mic[:len(frequency_mic) // 2]
+
+        positive_magnitude_piezo = magnitude_piezo[:len(magnitude_piezo) // 2]
+        positive_magnitude_mic = magnitude_mic[:len(magnitude_mic) // 2]
+
+        sampling_rate = 6000
+
+        frequency_hz_piezo = positive_frequency_piezo * sampling_rate
+        frequency_hz_mic = positive_frequency_mic * sampling_rate
+
+        positive_magnitude_df_piezo = pd.DataFrame({'Positive_Magnitude_piezo': positive_magnitude_piezo})
+        positive_magnitude_df_mic = pd.DataFrame({'Positive_Magnitude_mic': positive_magnitude_mic})
+
+        positive_magnitude_df_piezo.loc[0, 'Positive_Magnitude_piezo'] = 0
+        positive_magnitude_df_mic.loc[0, 'Positive_Magnitude_mic'] = 0
+
+        mean_piezo = np.mean(positive_magnitude_df_piezo["Positive_Magnitude_piezo"])
+        mean_mic = np.mean(positive_magnitude_df_mic["Positive_Magnitude_mic"])
+
+        std_dev_piezo = np.std(positive_magnitude_df_piezo["Positive_Magnitude_piezo"])
+        std_dev_mic = np.std(positive_magnitude_df_mic["Positive_Magnitude_mic"])
+
+        threshold = 5
+
+        lower_bound_piezo = mean_piezo - (threshold * std_dev_piezo)
+        lower_bound_mic = mean_mic - (threshold * std_dev_mic)
+
+        upper_bound_piezo = mean_piezo + (threshold * std_dev_piezo)
+        upper_bound_mic = mean_mic + (threshold * std_dev_mic)
+
+        magnitude_values_piezo = positive_magnitude_df_piezo["Positive_Magnitude_piezo"]
+        magnitude_values_mic = positive_magnitude_df_mic["Positive_Magnitude_mic"]
+
+        outliers_piezo = [i for i, x in enumerate(magnitude_values_piezo) if x < lower_bound_piezo or x > upper_bound_piezo]
+        outliers_mic = [i for i, x in enumerate(magnitude_values_mic) if x < lower_bound_mic or x > upper_bound_mic]
+
+        for i in outliers_piezo:
+            magnitude_values_piezo[i] = mean_piezo
+
+        for i in outliers_mic:
+            magnitude_values_mic[i] = mean_mic
+
+        positive_magnitude_df_piezo["Positive_Magnitude_piezo"] = magnitude_values_piezo
+        positive_magnitude_df_mic["Positive_Magnitude_mic"] = magnitude_values_mic
+        
+        complex_data_piezo = positive_magnitude_df_piezo["Positive_Magnitude_piezo"].values
+        complex_data_mic = positive_magnitude_df_mic["Positive_Magnitude_mic"].values
+
+        time_domain_data_piezo = ifft(complex_data_piezo)
+        time_domain_data_mic = ifft(complex_data_mic)
+
+        time_domain_df_piezo = pd.DataFrame({"Time_Domain_piezo_{}_{}".format(a, b): time_domain_data_piezo})
+        time_domain_df_mic = pd.DataFrame({"Time_Domain_mic_{}_{}".format(a, b): time_domain_data_mic})
+        
+        time_domain_df = pd.concat([time_domain_df_piezo['Time_Domain_piezo_{}_{}'.format(a, b)], time_domain_df_mic['Time_Domain_mic_{}_{}'.format(a, b)]], axis=1)
+        data[var_name] = time_domain_df
+
+t_data_wear_piezo = pd.DataFrame()
+for var_name, df in data.items():
+    t_data_wear_piezo[var_name] = df.iloc[:, 0]
+    
+new_column_names_wear_piezo = ['wear_piezo_' + column for column in t_data_wear_piezo.columns]
+t_data_wear_piezo.columns = new_column_names_wear_piezo
+
+
+t_data_wear_mic = pd.DataFrame()
+for var_name, df in data.items():
+    t_data_wear_mic[var_name] = df.iloc[:, 1]
+    
+new_column_names_wear_mic = ['wear_mic_' + column for column in t_data_wear_mic.columns]
+t_data_wear_mic.columns = new_column_names_wear_mic
+
+
+
+real_part_n_p = t_data_normal_piezo.apply(lambda x: x.apply(lambda z: z.real))
+imaginary_part_n_p = t_data_normal_piezo.apply(lambda x: x.apply(lambda z: z.imag))
+
+scaler = StandardScaler()
+scaled_real_n_p = scaler.fit_transform(real_part_n_p)
+
+new_columns_n_p = []
+
+for i in range(1, 97):
+    if i%3==1:
+        part = 'np_' + str(i//3+1)
+    new_columns_n_p.append(part + '_' + str((i-1)%3+1))
+
+scaled_complex_df_n_p = pd.DataFrame(scaled_real_n_p, columns=new_columns_n_p)
+
+
+
+real_part_n_m = t_data_normal_mic.apply(lambda x: x.apply(lambda z: z.real))
+imaginary_part_n_m = t_data_normal_mic.apply(lambda x: x.apply(lambda z: z.imag))
+
+scaler = StandardScaler()
+scaled_real_n_m = scaler.fit_transform(real_part_n_m)
+
+new_columns_n_m = []
+
+for i in range(1, 97):
+    if i%3==1:
+        part = 'nm_' + str(i//3+1)
+    new_columns_n_m.append(part + '_' + str((i-1)%3+1))
+
+scaled_complex_df_n_m = pd.DataFrame(scaled_real_n_m, columns=new_columns_n_m)
+
+
+
+real_part_w_p = t_data_wear_piezo.apply(lambda x: x.apply(lambda z: z.real))
+imaginary_part_w_p = t_data_wear_piezo.apply(lambda x: x.apply(lambda z: z.imag))
+
+scaler = StandardScaler()
+scaled_real_w_p = scaler.fit_transform(real_part_w_p)
+
+new_columns_w_p = []
+
+for i in range(1, 61):
+    if i%3==1:
+        part = 'wp_' + str(i//3+1)
+    new_columns_w_p.append(part + '_' + str((i-1)%3+1))
+
+scaled_complex_df_w_p = pd.DataFrame(scaled_real_w_p, columns=new_columns_w_p)
+
+
+
+real_part_w_m = t_data_wear_mic.apply(lambda x: x.apply(lambda z: z.real))
+imaginary_part_w_m = t_data_wear_mic.apply(lambda x: x.apply(lambda z: z.imag))
+
+scaler = StandardScaler()
+scaled_real_w_m = scaler.fit_transform(real_part_w_m)
+
+new_columns_w_m = []
+
+for i in range(1, 61):
+    if i%3==1:
+        part = 'wm_' + str(i//3+1)
+    new_columns_w_m.append(part + '_' + str((i-1)%3+1))
+
+scaled_complex_df_w_m = pd.DataFrame(scaled_real_w_m, columns=new_columns_w_m)
+
+
+
+sequence_piezo = pd.concat([scaled_complex_df_n_p,scaled_complex_df_w_p], join='outer', axis=1)
+sequence_mic = pd.concat([scaled_complex_df_n_m, scaled_complex_df_w_m], join='outer', axis=1)
+
+
+
+stat_piezo = pd.DataFrame({'min': sequence_piezo.min(numeric_only=True),'max': sequence_piezo.max(numeric_only=True),'quantile': sequence_piezo.quantile(numeric_only=True),'sum': sequence_piezo.sum(numeric_only=True),'mean': sequence_piezo.mean(numeric_only=True),'median': sequence_piezo.median(numeric_only=True),'skew': sequence_piezo.skew(numeric_only=True),'kurtosis': sequence_piezo.kurtosis(numeric_only=True)})
+stat_mic = pd.DataFrame({'min': sequence_mic.min(numeric_only=True),'max': sequence_mic.max(numeric_only=True),'quantile': sequence_mic.quantile(numeric_only=True),'sum': sequence_mic.sum(numeric_only=True),'mean': sequence_mic.mean(numeric_only=True),'median': sequence_mic.median(numeric_only=True),'skew': sequence_mic.skew(numeric_only=True),'kurtosis': sequence_mic.kurtosis(numeric_only=True)})
+
+
+
+from sklearn.decomposition import PCA
+model_piezo_pca = PCA(n_components=6)
+model_piezo_pca.fit(stat_piezo)
+stat_piezo = model_piezo_pca.transform(stat_piezo)
+stat_piezo_df = pd.DataFrame(stat_piezo)
+
+
+
+from sklearn.decomposition import PCA
+model_mic_pca = PCA(n_components=6)
+model_mic_pca.fit(stat_mic)
+stat_mic = model_mic_pca.transform(stat_mic)
+stat_mic_df = pd.DataFrame(stat_mic)
+
+
+
+stat_piezo_df['Target'] = [0]*96+[1]*60
+stat_mic_df['Target'] = [0]*96+[1]*60
+
+sns.scatterplot(data=stat_piezo_df, x=0, y=1, hue='Target')
+plt.show()
+
+
+
+from sklearn.model_selection import train_test_split
+
+X_train_piezo, X_test_piezo, y_train_piezo, y_test_piezo = train_test_split(stat_piezo_df[[0, 1, 2, 3, 4, 5]], stat_piezo_df['Target'])
+X_train_mic, X_test_mic, y_train_mic, y_test_mic = train_test_split(stat_mic_df[[0, 1, 2, 3, 4, 5]], stat_mic_df['Target'])
+
+
+
+# [1] Classifier
+from sklearn.linear_model import LogisticRegression
+
+model_lr_piezo = LogisticRegression()
+
+# [2] Fit
+model_lr_piezo.fit(X_train_piezo, y_train_piezo)
+
+# [3] Predict
+pred_lr_piezo = model_lr_piezo.predict(X_test_piezo)
+
+# [4] Evaluation
+from sklearn import metrics
+from IPython.display import display, Markdown
+# Confusion Matrix
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(y_test_piezo, pred_lr_piezo, margins=True))
+# Classification report
+print(metrics.classification_report(y_test_piezo, pred_lr_piezo))
+# Accuracy
+print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_lr_piezo)))
+# Precision
+print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_lr_piezo, average='weighted')))
+# Recall
+print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_lr_piezo, average='weighted')))
+
+
+
+# [1] Classifier
+from sklearn.svm import SVC
+
+model_svc_piezo = SVC(probability=True)
+
+# [2] Fit
+model_svc_piezo.fit(X_train_piezo, y_train_piezo)
+
+# [3] Predict
+pred_svc_piezo = model_svc_piezo.predict(X_test_piezo)
+
+# [4] Evaluation
+from sklearn import metrics
+from IPython.display import display, Markdown
+# Confusion Matrix
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(y_test_piezo, pred_svc_piezo, margins=True))
+# Classification report
+print(metrics.classification_report(y_test_piezo, pred_svc_piezo))
+# Accuracy
+print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_svc_piezo)))
+# Precision
+print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_svc_piezo, average='weighted')))
+# Recall
+print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_svc_piezo, average='weighted')))
+
+
+
+# [1] Classifier
+from sklearn.ensemble import RandomForestClassifier
+
+model_rf_piezo = RandomForestClassifier()
+
+# [2] Fit
+model_rf_piezo.fit(X_train_piezo, y_train_piezo)
+
+# [3] Predict
+pred_rf_piezo = model_rf_piezo.predict(X_test_piezo)
+
+# [4] Evaluation
+from sklearn import metrics
+from IPython.display import display, Markdown
+# Confusion Matrix
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(y_test_piezo, pred_rf_piezo, margins=True))
+# Classification report
+print(metrics.classification_report(y_test_piezo, pred_rf_piezo))
+# Accuracy
+print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_rf_piezo)))
+# Precision
+print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_rf_piezo, average='weighted')))
+# Recall
+print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_rf_piezo, average='weighted')))
+
+
+
+# [1] Classifier
+from xgboost import XGBClassifier
+
+model_xgb_piezo = XGBClassifier()
+
+# [2] Fit
+model_xgb_piezo.fit(X_train_piezo, y_train_piezo)
+
+# [3] Predict
+pred_xgb_piezo = model_xgb_piezo.predict(X_test_piezo)
+
+# [4] Evaluation
+from sklearn import metrics
+from IPython.display import display, Markdown
+# Confusion Matrix
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(y_test_piezo, pred_xgb_piezo, margins=True))
+# Classification report
+print(metrics.classification_report(y_test_piezo, pred_xgb_piezo))
+# Accuracy
+print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_xgb_piezo)))
+# Precision
+print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_xgb_piezo, average='weighted')))
+# Recall
+print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_xgb_piezo, average='weighted')))
+
+
+
+# [1] Classifier
+from xgboost import XGBClassifier
+
+model_xgb_mic = XGBClassifier()
+
+# [2] Fit
+model_xgb_mic.fit(X_train_mic, y_train_mic)
+
+# [3] Predict
+pred_xgb_mic = model_xgb_mic.predict(X_test_mic)
+
+# [4] Evaluation
+from sklearn import metrics
+from IPython.display import display, Markdown
+# Confusion Matrix
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(y_test_mic, pred_xgb_mic, margins=True))
+# Classification report
+print(metrics.classification_report(y_test_mic, pred_xgb_mic))
+# Accuracy
+print('Accuracy: {}'.format(metrics.accuracy_score(y_test_mic, pred_xgb_mic)))
+# Precision
+print('Precision: {}'.format(metrics.precision_score(y_test_mic, pred_xgb_mic, average='weighted')))
+# Recall
+print('Recall: {}'.format(metrics.recall_score(y_test_mic, pred_xgb_mic, average='weighted')))
+
+
+
+selected_columns_n_p = ['normal_piezo_data_1_1', 'normal_piezo_data_2_2', 'normal_piezo_data_3_3', 'normal_piezo_data_4_1', 'normal_piezo_data_5_2', 'normal_piezo_data_6_3', 'normal_piezo_data_7_1', 'normal_piezo_data_8_2', 'normal_piezo_data_9_3', 'normal_piezo_data_10_1', 'normal_piezo_data_11_2', 'normal_piezo_data_12_3', 'normal_piezo_data_13_1', 'normal_piezo_data_14_2', 'normal_piezo_data_15_3', 'normal_piezo_data_16_1', 'normal_piezo_data_17_2', 'normal_piezo_data_18_3', 'normal_piezo_data_19_1', 'normal_piezo_data_20_2', 'normal_piezo_data_21_3', 'normal_piezo_data_22_1', 'normal_piezo_data_23_2', 'normal_piezo_data_24_3', 'normal_piezo_data_25_1', 'normal_piezo_data_26_2', 'normal_piezo_data_27_3', 'normal_piezo_data_28_1', 'normal_piezo_data_29_2', 'normal_piezo_data_30_3']
+selected_columns_n_m = ['normal_mic_data_1_1', 'normal_mic_data_2_2', 'normal_mic_data_3_3', 'normal_mic_data_4_1', 'normal_mic_data_5_2', 'normal_mic_data_6_3', 'normal_mic_data_7_1', 'normal_mic_data_8_2', 'normal_mic_data_9_3', 'normal_mic_data_10_1', 'normal_mic_data_11_2', 'normal_mic_data_12_3', 'normal_mic_data_13_1', 'normal_mic_data_14_2', 'normal_mic_data_15_3', 'normal_mic_data_16_1', 'normal_mic_data_17_2', 'normal_mic_data_18_3', 'normal_mic_data_19_1', 'normal_mic_data_20_2', 'normal_mic_data_21_3', 'normal_mic_data_22_1', 'normal_mic_data_23_2', 'normal_mic_data_24_3', 'normal_mic_data_25_1', 'normal_mic_data_26_2', 'normal_mic_data_27_3', 'normal_mic_data_28_1', 'normal_mic_data_29_2', 'normal_mic_data_30_3']
+selected_columns_w_p = ['wear_piezo_data_33_1', 'wear_piezo_data_34_2', 'wear_piezo_data_35_3', 'wear_piezo_data_36_1', 'wear_piezo_data_37_2', 'wear_piezo_data_38_3', 'wear_piezo_data_39_1', 'wear_piezo_data_40_2', 'wear_piezo_data_41_3', 'wear_piezo_data_42_1', 'wear_piezo_data_43_2', 'wear_piezo_data_44_3', 'wear_piezo_data_45_1', 'wear_piezo_data_46_2', 'wear_piezo_data_47_3', 'wear_piezo_data_48_1', 'wear_piezo_data_49_2', 'wear_piezo_data_50_3']
+selected_columns_w_m = ['wear_mic_data_33_1', 'wear_mic_data_34_2', 'wear_mic_data_35_3', 'wear_mic_data_36_1', 'wear_mic_data_37_2', 'wear_mic_data_38_3', 'wear_mic_data_39_1', 'wear_mic_data_40_2', 'wear_mic_data_41_3', 'wear_mic_data_42_1', 'wear_mic_data_43_2', 'wear_mic_data_44_3', 'wear_mic_data_45_1', 'wear_mic_data_46_2', 'wear_mic_data_47_3', 'wear_mic_data_48_1', 'wear_mic_data_49_2', 'wear_mic_data_50_3']
+
+test_normal_piezo = t_data_normal_piezo[selected_columns_n_p]
+test_normal_mic = t_data_normal_mic[selected_columns_n_m]
+test_wear_piezo = t_data_wear_piezo[selected_columns_w_p]
+test_wear_mic = t_data_wear_mic[selected_columns_w_m]
+
+
+
+test_n_p = test_normal_piezo.apply(lambda x:x.apply(lambda z:z.real))
+test_scaled_n_p = scaler.fit_transform(test_n_p)
+test_new_columns_n_p = []
+for i in range(1, 31):
+	if i%3==1:
+		part = 'np_'+str(i//3+1)
+	test_new_columns_n_p.append(part+'_'+str((i-1)%3+1))
+test_scaled_n_p_df = pd.DataFrame(test_scaled_n_p, columns=test_new_columns_n_p)
+
+
+
+test_n_m = test_normal_mic.apply(lambda x:x.apply(lambda z:z.real))
+test_scaled_n_m = scaler.fit_transform(test_n_m)
+test_new_columns_n_m = []
+for i in range(1, 31):
+	if i%3==1:
+		part = 'nm_'+str(i//3+1)
+	test_new_columns_n_m.append(part+'_'+str((i-1)%3+1))
+test_scaled_n_m_df = pd.DataFrame(test_scaled_n_m, columns=test_new_columns_n_m)
+
+
+
+test_w_p = test_wear_piezo.apply(lambda x:x.apply(lambda z:z.real))
+test_scaled_w_p = scaler.fit_transform(test_w_p)
+test_new_columns_w_p = []
+for i in range(1, 19):
+	if i%3==1:
+		part = 'wp_'+str(i//3+1)
+	test_new_columns_w_p.append(part+'_'+str((i-1)%3+1))
+test_scaled_w_p_df = pd.DataFrame(test_scaled_w_p, columns=test_new_columns_w_p)
+
+
+
+test_w_m = test_wear_mic.apply(lambda x:x.apply(lambda z:z.real))
+test_scaled_w_m = scaler.fit_transform(test_w_m)
+test_new_columns_w_m = []
+for i in range(1, 19):
+	if i%3==1:
+		part = 'wm_'+str(i//3+1)
+	test_new_columns_w_m.append(part+'_'+str((i-1)%3+1))
+test_scaled_w_m_df = pd.DataFrame(test_scaled_w_m, columns=test_new_columns_w_m)
+
+
+
+test_sequence_piezo = pd.concat([test_scaled_n_p_df, test_scaled_w_p_df], join='outer', axis=1)
+test_sequence_mic = pd.concat([test_scaled_n_m_df, test_scaled_w_m_df], join='outer', axis=1)
+
+
+
+test_stat_piezo = pd.DataFrame({'min': test_sequence_piezo.min(numeric_only=True),'max': test_sequence_piezo.max(numeric_only=True),'quantile': test_sequence_piezo.quantile(numeric_only=True),'sum': test_sequence_piezo.sum(numeric_only=True),'mean': test_sequence_piezo.mean(numeric_only=True),'median': test_sequence_piezo.median(numeric_only=True),'skew': test_sequence_piezo.skew(numeric_only=True),'kurtosis': test_sequence_piezo.kurtosis(numeric_only=True)})
+test_stat_mic = pd.DataFrame({'min': test_sequence_mic.min(numeric_only=True),'max': test_sequence_mic.max(numeric_only=True),'quantile': test_sequence_mic.quantile(numeric_only=True),'sum': test_sequence_mic.sum(numeric_only=True),'mean': test_sequence_mic.mean(numeric_only=True),'median': test_sequence_mic.median(numeric_only=True),'skew': test_sequence_mic.skew(numeric_only=True),'kurtosis': test_sequence_mic.kurtosis(numeric_only=True)})
+
+test_stat_piezo = model_piezo_pca.transform(test_stat_piezo)
+test_stat_piezo_df = pd.DataFrame(test_stat_piezo)
+test_stat_mic = model_mic_pca.transform(test_stat_mic)
+test_stat_mic_df = pd.DataFrame(test_stat_mic)
+
+test_stat_piezo_df['Target'] = [0]*30+[1]*18
+test_stat_mic_df['Target'] = [0]*30+[1]*18
+
+
+
+test_X_test_piezo = test_stat_piezo_df[[0, 1, 2, 3, 4, 5]]
+test_y_test_piezo = test_stat_piezo_df['Target']
+test_X_test_mic = test_stat_mic_df[[0, 1, 2, 3, 4, 5]]
+test_y_test_mic = test_stat_mic_df['Target']
+
+
+
+test_pred_xgb_piezo = model_xgb_piezo.predict(test_X_test_piezo)
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(test_y_test_piezo, test_pred_xgb_piezo, margins=True))
+print(metrics.classification_report(test_y_test_piezo, test_pred_xgb_piezo))
+print('Accuracy: {}'.format(metrics.accuracy_score(test_y_test_piezo, test_pred_xgb_piezo)))
+print('Precision: {}'.format(metrics.precision_score(test_y_test_piezo, test_pred_xgb_piezo, average='weighted')))
+print('Recall: {}'.format(metrics.recall_score(test_y_test_piezo, test_pred_xgb_piezo, average='weighted')))
+
+test_pred_xgb_mic = model_xgb_mic.predict(test_X_test_mic)
+display(Markdown('### Confusion Matrix'))
+display(pd.crosstab(test_y_test_mic, test_pred_xgb_mic, margins=True))
+print(metrics.classification_report(test_y_test_mic, test_pred_xgb_mic))
+print('Accuracy: {}'.format(metrics.accuracy_score(test_y_test_mic, test_pred_xgb_mic)))
+print('Precision: {}'.format(metrics.precision_score(test_y_test_mic, test_pred_xgb_mic, average='weighted')))
+print('Recall: {}'.format(metrics.recall_score(test_y_test_mic, test_pred_xgb_mic, average='weighted')))
+
+
+
+result_test_lr_piezo = pd.DataFrame(test_pred_lr_piezo)
+result_test_lr_piezo.rename(columns={0:'PIEZO_LR'}, inplace=True)
+result_test_svc_piezo = pd.DataFrame(test_pred_svc_piezo)
+result_test_svc_piezo.rename(columns={0:'PIEZO_SVC'}, inplace=True)
+result_test_rf_piezo = pd.DataFrame(test_pred_rf_piezo)
+result_test_rf_piezo.rename(columns={0:'PIEZO_RF'}, inplace=True)
+result_test_xgb_piezo = pd.DataFrame(test_pred_xgb_piezo)
+result_test_xgb_piezo.rename(columns={0:'PIEZO_XGB'}, inplace=True)
+
+result_test_lr_mic= pd.DataFrame(test_pred_lr_mic)
+result_test_lr_mic.rename(columns={0:'MIC_LR'}, inplace=True)
+result_test_svc_mic= pd.DataFrame(test_pred_svc_mic)
+result_test_svc_mic.rename(columns={0:'MIC_SVC'}, inplace=True)
+result_test_rf_mic = pd.DataFrame(test_pred_rf_mic)
+result_test_rf_mic.rename(columns={0:'MIC_RF'}, inplace=True)
+result_test_xgb_mic= pd.DataFrame(test_pred_xgb_mic)
+result_test_xgb_mic.rename(columns={0:'MIC_XGB'}, inplace=True)
+
+
+
+probs_xgb_piezo = model_xgb_piezo.predict_proba(test_X_test_piezo)
+probs_xgb_piezo_df = pd.DataFrame(probs_xgb_piezo)
+
+probs_xgb_mic = model_xgb_mic.predict_proba(test_X_test_mic)
+probs_xgb_mic_df = pd.DataFrame(probs_xgb_mic)
+
+piezo_xgb_prob = pd.DataFrame(columns=['piezo_xgb_prob'])
+for index, row in probs_xgb_piezo_df.iterrows():
+    max_prob_xgb_piezo = max(row[0], row[1])
+    piezo_xgb_prob = piezo_xgb_prob.append({'piezo_xgb_prob': max_prob_xgb_piezo}, ignore_index=True)
+
+mic_xgb_prob = pd.DataFrame(columns=['mic_xgb_prob'])
+for index, row in probs_xgb_mic_df.iterrows():
+    max_prob_xgb_mic = max(row[0], row[1])
+    mic_xgb_prob = mic_xgb_prob.append({'mic_xgb_prob': max_prob_xgb_mic}, ignore_index=True)
+
+
+
+answer = [0]*30+[1]*18
+answer_df = pd.DataFrame(answer)
+answer_df.rename(columns={0: 'ANSWER'}, inplace=True)
+
+result_xgb = pd.concat([answer_df,result_test_xgb_piezo,result_test_xgb_mic,piezo_xgb_prob,mic_xgb_prob], join='outer', axis=1)
+
+result_xgb['RESULT'] = 0
+
+for index, row in result_xgb.iterrows():
+    if row['PIEZO_XGB'] == row['MIC_XGB']:
+        result_xgb.at[index, 'RESULT'] = row['PIEZO_XGB']
+    else:
+        if row['piezo_xgb_prob'] > row['mic_xgb_prob']:
+            result_xgb.at[index, 'RESULT'] = row['PIEZO_XGB']
+        else:
+            result_xgb.at[index, 'RESULT'] = row['MIC_XGB']
+
+
+
+result_xgb['RESULT'] = result_xgb['RESULT'].map({0: 'NORMAL', 1: 'WEAR'})
+result_xgb['ANSWER'] = result_xgb['ANSWER'].map({0: 'NORMAL', 1: 'WEAR'})
+
+different_count_xgb = (result_xgb['RESULT'] != result_xgb['ANSWER']).sum()
+percentage_xgb = ((48 - different_count_xgb) / 48) * 100
+
+print(f"다른 행의 갯수: {different_count_xgb}")
+print(f"점수: {percentage_xgb}")
