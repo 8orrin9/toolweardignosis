@@ -1,3 +1,5 @@
+
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -96,7 +98,6 @@ for var_name, df in data.items():
 new_column_names_normal_piezo = ['normal_piezo_' + column for column in t_data_normal_piezo.columns]
 t_data_normal_piezo.columns = new_column_names_normal_piezo
 
-
 t_data_normal_mic = pd.DataFrame()
 for var_name, df in data.items():
     t_data_normal_mic[var_name] = df.iloc[:, 1]
@@ -192,7 +193,6 @@ for var_name, df in data.items():
 new_column_names_wear_piezo = ['wear_piezo_' + column for column in t_data_wear_piezo.columns]
 t_data_wear_piezo.columns = new_column_names_wear_piezo
 
-
 t_data_wear_mic = pd.DataFrame()
 for var_name, df in data.items():
     t_data_wear_mic[var_name] = df.iloc[:, 1]
@@ -204,6 +204,8 @@ t_data_wear_mic.columns = new_column_names_wear_mic
 
 real_part_n_p = t_data_normal_piezo.apply(lambda x: x.apply(lambda z: z.real))
 imaginary_part_n_p = t_data_normal_piezo.apply(lambda x: x.apply(lambda z: z.imag))
+
+
 
 scaler = StandardScaler()
 scaled_real_n_p = scaler.fit_transform(real_part_n_p)
@@ -224,6 +226,8 @@ imaginary_part_n_m = t_data_normal_mic.apply(lambda x: x.apply(lambda z: z.imag)
 
 scaler = StandardScaler()
 scaled_real_n_m = scaler.fit_transform(real_part_n_m)
+
+
 
 new_columns_n_m = []
 
@@ -311,142 +315,121 @@ X_train_mic, X_test_mic, y_train_mic, y_test_mic = train_test_split(stat_mic_df[
 
 
 
-# [1] Classifier
 from sklearn.linear_model import LogisticRegression
-
 model_lr_piezo = LogisticRegression()
 
-# [2] Fit
 model_lr_piezo.fit(X_train_piezo, y_train_piezo)
 
-# [3] Predict
 pred_lr_piezo = model_lr_piezo.predict(X_test_piezo)
 
-# [4] Evaluation
 from sklearn import metrics
 from IPython.display import display, Markdown
-# Confusion Matrix
+
 display(Markdown('### Confusion Matrix'))
 display(pd.crosstab(y_test_piezo, pred_lr_piezo, margins=True))
-# Classification report
+
 print(metrics.classification_report(y_test_piezo, pred_lr_piezo))
-# Accuracy
+
 print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_lr_piezo)))
-# Precision
+
 print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_lr_piezo, average='weighted')))
-# Recall
+
 print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_lr_piezo, average='weighted')))
 
 
 
-# [1] Classifier
 from sklearn.svm import SVC
 
 model_svc_piezo = SVC(probability=True)
 
-# [2] Fit
 model_svc_piezo.fit(X_train_piezo, y_train_piezo)
 
-# [3] Predict
 pred_svc_piezo = model_svc_piezo.predict(X_test_piezo)
 
-# [4] Evaluation
 from sklearn import metrics
 from IPython.display import display, Markdown
-# Confusion Matrix
+
 display(Markdown('### Confusion Matrix'))
 display(pd.crosstab(y_test_piezo, pred_svc_piezo, margins=True))
-# Classification report
+
 print(metrics.classification_report(y_test_piezo, pred_svc_piezo))
-# Accuracy
+
 print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_svc_piezo)))
-# Precision
+
 print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_svc_piezo, average='weighted')))
-# Recall
+
 print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_svc_piezo, average='weighted')))
 
 
 
-# [1] Classifier
 from sklearn.ensemble import RandomForestClassifier
 
 model_rf_piezo = RandomForestClassifier()
 
-# [2] Fit
 model_rf_piezo.fit(X_train_piezo, y_train_piezo)
 
-# [3] Predict
 pred_rf_piezo = model_rf_piezo.predict(X_test_piezo)
 
-# [4] Evaluation
 from sklearn import metrics
 from IPython.display import display, Markdown
-# Confusion Matrix
+
 display(Markdown('### Confusion Matrix'))
 display(pd.crosstab(y_test_piezo, pred_rf_piezo, margins=True))
-# Classification report
+
 print(metrics.classification_report(y_test_piezo, pred_rf_piezo))
-# Accuracy
+
 print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_rf_piezo)))
-# Precision
+
 print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_rf_piezo, average='weighted')))
-# Recall
+
 print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_rf_piezo, average='weighted')))
 
 
 
-# [1] Classifier
 from xgboost import XGBClassifier
 
 model_xgb_piezo = XGBClassifier()
 
-# [2] Fit
 model_xgb_piezo.fit(X_train_piezo, y_train_piezo)
 
-# [3] Predict
 pred_xgb_piezo = model_xgb_piezo.predict(X_test_piezo)
 
-# [4] Evaluation
 from sklearn import metrics
 from IPython.display import display, Markdown
-# Confusion Matrix
+
 display(Markdown('### Confusion Matrix'))
 display(pd.crosstab(y_test_piezo, pred_xgb_piezo, margins=True))
-# Classification report
+
 print(metrics.classification_report(y_test_piezo, pred_xgb_piezo))
-# Accuracy
+
 print('Accuracy: {}'.format(metrics.accuracy_score(y_test_piezo, pred_xgb_piezo)))
-# Precision
+
 print('Precision: {}'.format(metrics.precision_score(y_test_piezo, pred_xgb_piezo, average='weighted')))
-# Recall
+
 print('Recall: {}'.format(metrics.recall_score(y_test_piezo, pred_xgb_piezo, average='weighted')))
 
 
 
-# [1] Classifier
 from xgboost import XGBClassifier
 
 model_xgb_mic = XGBClassifier()
 
-# [2] Fit
 model_xgb_mic.fit(X_train_mic, y_train_mic)
 
-# [3] Predict
 pred_xgb_mic = model_xgb_mic.predict(X_test_mic)
 
-# [4] Evaluation
 from sklearn import metrics
 from IPython.display import display, Markdown
-# Confusion Matrix
+
 display(Markdown('### Confusion Matrix'))
 display(pd.crosstab(y_test_mic, pred_xgb_mic, margins=True))
-# Classification report
+
 print(metrics.classification_report(y_test_mic, pred_xgb_mic))
-# Accuracy
+
 print('Accuracy: {}'.format(metrics.accuracy_score(y_test_mic, pred_xgb_mic)))
-# Precision
+
 print('Precision: {}'.format(metrics.precision_score(y_test_mic, pred_xgb_mic, average='weighted')))
-# Recall
+
 print('Recall: {}'.format(metrics.recall_score(y_test_mic, pred_xgb_mic, average='weighted')))
 
 
@@ -615,3 +598,4 @@ percentage_xgb = ((48 - different_count_xgb) / 48) * 100
 
 print(f"다른 행의 갯수: {different_count_xgb}")
 print(f"점수: {percentage_xgb}")
+
