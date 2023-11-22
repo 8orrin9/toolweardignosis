@@ -1,3 +1,5 @@
+
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,6 +10,8 @@ from plotly.offline import init_notebook_mode
 from scipy.fft import ifft
 from sklearn.preprocessing import StandardScaler
 import joblib
+
+
 
 data = {}
 
@@ -116,7 +120,9 @@ for i in range(1, 97):
         part = 'tp_' + str(i//3+1)
     new_columns_t_p.append(part + '_' + str((i-1)%3+1))
 
-scaled_complex_df_t_p = pd.DataFrame(scaled_real_t_p, columns=new_columns_t_p)
+sequence_piezo = pd.DataFrame(scaled_real_t_p, columns=new_columns_t_p)
+
+
 
 real_part_t_m = t_data_test_mic.apply(lambda x: x.apply(lambda z: z.real))
 imaginary_part_t_m = t_data_test_mic.apply(lambda x: x.apply(lambda z: z.imag))
@@ -158,8 +164,8 @@ test_X_test_mic = pd.DataFrame(stat_mic)
 
 
 
-model_xgb_piezo = joblib.load('model_xgb_piezo.pkl')
-model_xgb_mic = joblib.load('model_xgb_mic.pkl')
+#model_xgb_piezo = joblib.load('model_xgb_piezo.pkl')
+#model_xgb_mic = joblib.load('model_xgb_mic.pkl')
 
 
 
@@ -214,6 +220,7 @@ for index, row in result_xgb.iterrows():
                 result_xgb.at[index, 'RESULT'] = 'NORMAL'
 
 
+
 final = result_xgb['RESULT'].iloc[0:3].tolist()
 normal_count = final.count('NORMAL')
 wear_count = final.count('WEAR')
@@ -226,3 +233,4 @@ elif normal_count == 2 and wear_count == 1:
     print("NORMAL_need check")
 elif normal_count == 1 and wear_count == 2:
     print("WEAR_need check")
+
