@@ -279,8 +279,8 @@ sequence_mic = pd.concat([scaled_complex_df_n_m, scaled_complex_df_w_m], join='o
 
 
 
-stat_piezo = pd.DataFrame({'min': sequence_piezo.min(numeric_only=True),'max': sequence_piezo.max(numeric_only=True),'quantile': sequence_piezo.quantile(numeric_only=True),'sum': sequence_piezo.sum(numeric_only=True),'mean': sequence_piezo.mean(numeric_only=True),'median': sequence_piezo.median(numeric_only=True),'skew': sequence_piezo.skew(numeric_only=True),'kurtosis': sequence_piezo.kurtosis(numeric_only=True)})
-stat_mic = pd.DataFrame({'min': sequence_mic.min(numeric_only=True),'max': sequence_mic.max(numeric_only=True),'quantile': sequence_mic.quantile(numeric_only=True),'sum': sequence_mic.sum(numeric_only=True),'mean': sequence_mic.mean(numeric_only=True),'median': sequence_mic.median(numeric_only=True),'skew': sequence_mic.skew(numeric_only=True),'kurtosis': sequence_mic.kurtosis(numeric_only=True)})
+stat_piezo = pd.DataFrame({'min': sequence_piezo.min(numeric_only=True),'max': sequence_piezo.max(numeric_only=True),'quantile': sequence_piezo.quantile(numeric_only=True),'median': sequence_piezo.median(numeric_only=True),'skew': sequence_piezo.skew(numeric_only=True),'kurtosis': sequence_piezo.kurtosis(numeric_only=True)})
+stat_mic = pd.DataFrame({'min': sequence_mic.min(numeric_only=True),'max': sequence_mic.max(numeric_only=True),'quantile': sequence_mic.quantile(numeric_only=True),'sum': sequence_mic.sum(numeric_only=True),'skew': sequence_mic.skew(numeric_only=True),'kurtosis': sequence_mic.kurtosis(numeric_only=True)})
 
 
 
